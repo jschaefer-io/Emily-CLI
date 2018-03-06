@@ -24,7 +24,7 @@ module.exports = {
 		let config = this.config(),
 			list = new Array();
 		for(let module in config.modules){
-			list.push(config.path + path.sep + config.modules[module].name + path.sep);
+			list.push(config.path + '/' + config.modules[module].name + '/');
 		}
 		return list;
 	}
