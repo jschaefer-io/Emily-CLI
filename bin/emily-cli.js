@@ -121,7 +121,7 @@ program
 
 		if (!options.nofiles) {
 			config.defaults.files.forEach((file)=>{
-				fs.writeFile(moduleDir + path.sep + file.name, file.content, (e)=>{if (e) throw e;});
+				fs.writeFile(moduleDir + path.sep + file.name, file.content.replace(new RegExp('\\$\\{module\\}', 'g'), module), (e)=>{if (e) throw e;});
 			});
 		}
 
