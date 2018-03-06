@@ -1,19 +1,19 @@
 {
-  "name": "emily-cli",
+  "name": "emily-cm",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jschaefer-io/Emily-CLI.git"
+    "url": "git+https://github.com/jschaefer-io/emily-cm"
   },
   "author": "Jannik Schäfer <me@jschaefer.io>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jschaefer-io/Emily-CLI/issues"
+    "url": "https://github.com/jschaefer-io/emily-cm/issues"
   },
-  "homepage": "https://github.com/jschaefer-io/Emily-CLI#readme",
+  "homepage": "https://github.com/jschaefer-io/emily-cm#readme",
   "dependencies": {
     "colors": "^1.1.2",
     "commander": "^2.14.1",
