@@ -58,11 +58,16 @@ program
 					});
 				});
 			}
+			let commands = [];
+			if (result.command.trim() !== '') {
+				commands.push(result.command.trim());
+			}
+
 			let json = {
 				path: target.replace(path.sep, '/'),
 				modules: {},
 				defaults: {
-					commands: [result.command],
+					commands: commands,
 					files: files
 				}
 			};
