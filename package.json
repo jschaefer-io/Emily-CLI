@@ -1,0 +1,25 @@
+{
+  "name": "emily-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jschaefer-io/Emily-CLI.git"
+  },
+  "author": "Jannik Schäfer <me@jschaefer.io>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jschaefer-io/Emily-CLI/issues"
+  },
+  "homepage": "https://github.com/jschaefer-io/Emily-CLI#readme",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "commander": "^2.14.1",
+    "prompt": "^1.0.0"
+  },
+  "bin": {
+    "emily": "bin/emily-cli.js"
+  }
+}
