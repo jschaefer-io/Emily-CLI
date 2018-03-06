@@ -7,12 +7,8 @@ const colors = require('colors');
 
 const mkdir = require('./functions/mkdir');
 const execArray = require('./functions/execarray');
-const package = require('./package.json');
 const cwd = process.cwd();
-
-
-
-
+const package = require(cwd + path.sep + 'package.json');
  
 program
   .version(package.version);
@@ -87,7 +83,7 @@ program
 	.action(async(module)=>{
 		let config;
 		try{
-			config = require('./emily.json');	
+			config = require(cwd + path.sep + 'emily.json');	
 		}
 		catch(e){
 			console.log(colors.red('emily.json not found!'));
@@ -103,7 +99,7 @@ program
 			active: true,
 			repository: ''
 		};
-		await fs.writeFile('./emily.json', JSON.stringify(config, null, 4), (e)=>{
+		await fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{
 			if (e) {
 				throw e;
 			}
@@ -125,7 +121,7 @@ program
 	.description('Activates the module with the given name')
 	.action(async(module)=>{
 		try{
-			config = require('./emily.json');	
+			config = require(cwd + path.sep + 'emily.json');	
 		}
 		catch(e){
 			console.log(colors.red('emily.json not found!'));
@@ -133,7 +129,7 @@ program
 		}
 		if (config.modules[module]) {
 			config.modules[module].active = true;
-			fs.writeFile('./emily.json', JSON.stringify(config, null, 4), (e)=>{if (e) throw e;});
+			fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{if (e) throw e;});
 		}
 		else{
 			console.log(colors.red('Module could not be found'));
@@ -145,7 +141,7 @@ program
 	.description('Deactivates the module with the given name')
 	.action(async(module)=>{
 		try{
-			config = require('./emily.json');	
+			config = require(cwd + path.sep + 'emily.json');	
 		}
 		catch(e){
 			console.log(colors.red('emily.json not found!'));
@@ -153,7 +149,7 @@ program
 		}
 		if (config.modules[module]) {
 			config.modules[module].active = false;
-			fs.writeFile('./emily.json', JSON.stringify(config, null, 4), (e)=>{if (e) throw e;});
+			fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{if (e) throw e;});
 		}
 		else{
 			console.log(colors.red('Module could not be found'));
@@ -165,7 +161,7 @@ program
 	.description('Lists all modules')
 	.action(async(module)=>{
 		try{
-			config = require('./emily.json');	
+			config = require(cwd + path.sep + 'emily.json');	
 		}
 		catch(e){
 			console.log(colors.red('emily.json not found!'));
