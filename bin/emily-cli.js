@@ -230,6 +230,5 @@ program.parse(process.argv);
  * No Parameter given -> render help
  */
 if (!process.argv.slice(2).length) {
-	console.log(program);
 	program.help();
 }
