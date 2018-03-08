@@ -223,6 +223,64 @@ program
 		});
 	});
 
+program
+	.command('gitinit <git> <name>')
+	.description('Creates a new module from its remote repository')
+	.action(async(git, name)=>{
+		try{
+			config = emily.config();
+		}
+		catch(e){
+			console.log(colors.red('emily.json not found!'));
+			return;
+		}
+
+		if (config.modules[name]) {
+			console.log(colors.red('Module ') + name + colors.red(' already exists.'));
+			return;
+		}
+
+		config.modules[name] = {
+			name: name,
+			active: true,
+			repository: git
+		};
+
+		await fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{
+			if (e) {
+				throw e;
+			}
+		});
+
+		let moduleDir = cwd + path.sep + config.path + path.sep + name;
+		await execArray(['git clone ' + git + ' ' + moduleDir], cwd);
+	});
+
+program
+	.command('gitcheckout <module>')
+	.description('Pulls the given Module from its repository.')
+	.action(async(module)=>{
+		try{
+			config = emily.config();
+		}
+		catch(e){
+			console.log(e);
+			console.log(colors.red('emily.json not found!'));
+			return;
+		}
+
+		if (!config.modules[module]) {
+			console.log(colors.red('Module ') + module + colors.red(' could not be found.'));
+			return;
+		}
+		if (config.modules[module].repository.length === 0) {
+			console.log(colors.red('Module ') + module + colors.red(' has no defined repository.'));
+			return;
+		}
+		let moduleDir = cwd + path.sep + config.path + path.sep + module;
+		await execArray(['git clone ' + config.modules[module].repository + ' ' + moduleDir], cwd);
+	});
+
 
 program.parse(process.argv);
 

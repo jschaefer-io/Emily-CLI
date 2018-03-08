@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const cwd = process.cwd();
 
-function mkdir(dir, done = cwd){
+async function mkdir(dir, done = cwd){
 	dir = dir
+			.replace(/(\\|\/)/g, path.sep)
 			.replace(cwd,'')
 			.split(path.sep)
 			.filter((el)=>{
@@ -14,7 +15,7 @@ function mkdir(dir, done = cwd){
 		fs.mkdirSync(done);
 	}
 	if (dir.length > 0) {
-		mkdir(dir.join(path.sep), done);
+		await mkdir(dir.join(path.sep), done);
 	}
 };
 
