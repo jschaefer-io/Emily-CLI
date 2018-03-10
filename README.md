@@ -1,6 +1,6 @@
-# Emily-CM
+# emily-cm
 Emily is a **component manager** and offers easy integration with your workflow while not restricting structural freedom.
-Install from GitHub (npm will be added later) via `npm install https://github.com/jschaefer-io/Emily-CLI`
+Install using: `npm install emily-clm -g --save`
 
 ## Commands
 - `emily init <dir>` Generates the emily.json
