@@ -1,6 +1,6 @@
 # emily-cm
 Emily is a **component manager** and offers easy integration with your workflow while not restricting structural freedom.
-Install using: `npm install emily-clm -g --save`
+Install using: `npm install emily-cm -g`
 
 ## Commands
 - `emily init <dir>` Generates the emily.json
