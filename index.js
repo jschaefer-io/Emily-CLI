@@ -1,10 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const jsonfile = require('jsonfile');
 const cwd = process.cwd();
 
 module.exports = {
 	config: function(){
-		return require(cwd + path.sep + 'emily.json');
+		return jsonfile.readFileSync(cwd + path.sep + 'emily.json');
 	},
 	all: function(){
 		let objModules = this.config().modules,

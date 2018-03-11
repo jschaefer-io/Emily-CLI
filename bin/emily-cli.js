@@ -9,9 +9,10 @@ const colors = require('colors');
 
 const emily = require('..');
 const cwd = process.cwd();
-const mkdir = require('./functions/mkdir');
+const makeDir = require('make-dir');
 const execArray = require('./functions/execarray');
 const package = require(cwd + path.sep + 'package.json');
+const jsonfile = require('jsonfile');
 
 program
   .version(package.version);
@@ -26,7 +27,7 @@ program
 		}
 		let target = dir.replace(/(\\|\/)/g, path.sep);
 		if (!fs.existsSync(cwd + path.sep + target)) {
-			mkdir(cwd + path.sep + target);
+			makeDir.sync(cwd + path.sep + target);
 			console.log(colors.green('Direcoty created.'));
 		}
 		else if (fs.readdirSync(cwd + path.sep + target).length !== 0) {
@@ -74,9 +75,9 @@ program
 					files: files
 				}
 			};
-			fs.writeFile('emily.json', JSON.stringify(json, null, 4), (e)=>{
-				if (e) {
-					throw e;
+			jsonfile.writeFile('emily.json', json, {spaces: 2}, function (err) {
+				if (err) {
+					throw err;
 				}
 				console.log(colors.green('Emily initialized successfully.'));
 			});
@@ -110,14 +111,14 @@ program
 			repository: ''
 		};
 
-		await fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{
-			if (e) {
-				throw e;
+		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
+			if (err) {
+				throw err;
 			}
 		});
 
 		let moduleDir = cwd + path.sep + config.path + path.sep + module;
-		mkdir(moduleDir);
+		makeDir.sync(moduleDir);
 
 		if (!options.nofiles) {
 			config.defaults.files.forEach((file)=>{
@@ -161,7 +162,11 @@ program
 				console.log(colors.red('Module could not be found'));
 			}		
 		}
-		fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{if (e) throw e;});
+		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
+			if (err) {
+				throw err;
+			}
+		});
 	});
 
 program
@@ -193,7 +198,11 @@ program
 				console.log(colors.red('Module could not be found'));
 			}		
 		}
-		fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{if (e) throw e;});	
+		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
+			if (err) {
+				throw err;
+			}
+		});
 	});
 
 program
@@ -246,9 +255,9 @@ program
 			repository: git
 		};
 
-		await fs.writeFile('emily.json', JSON.stringify(config, null, 4), (e)=>{
-			if (e) {
-				throw e;
+		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
+			if (err) {
+				throw err;
 			}
 		});
 
