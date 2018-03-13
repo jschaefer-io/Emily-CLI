@@ -55,14 +55,14 @@ program
 		let target = dir.replace(/(\\|\/)/g, path.sep);
 		if (!fs.existsSync(cwd + path.sep + target)) {
 			makeDir.sync(cwd + path.sep + target);
-			console.log(colors.green('Direcoty created.'));
+			console.log(colors.green('Directory created.'));
 		}
 		else if (fs.readdirSync(cwd + path.sep + target).length !== 0) {
 			console.log(colors.red('Target directory is not empty.'))
 			return;	
 		}
 		else{
-			console.log(colors.green('Direcoty validated.'));
+			console.log(colors.green('Directory validated.'));
 		}
 
 		prompt.message = colors.blue('Setup');

@@ -37,7 +37,7 @@ emily.toPaths(emily.all());
 ```
 
 ### Example with gulp
-``` javascript
+```javascript
 const gulp = require('gulp');
 const emily = require('emily-cm');
  

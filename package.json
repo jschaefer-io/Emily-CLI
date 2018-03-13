@@ -6,7 +6,7 @@
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jschaefer-io/emily-cm"
+    "url": "git+https://github.com/jschaefer-io/emily-cm.git"
   },
   "author": "Jannik Schäfer <me@jschaefer.io>",
   "license": "ISC",
@@ -25,5 +25,15 @@
   "bin": {
     "emily": "bin/emily.js"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [
+    "component",
+    "manager",
+    "frontend",
+    "build",
+    "workflow"
+  ]
 }
