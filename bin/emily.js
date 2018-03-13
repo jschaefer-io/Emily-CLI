@@ -10,9 +10,34 @@ const colors = require('colors');
 const emily = require('..');
 const cwd = process.cwd();
 const makeDir = require('make-dir');
-const execArray = require('./functions/execarray');
-const package = require(cwd + path.sep + 'package.json');
+const package = require('../' + 'package.json');
 const jsonfile = require('jsonfile');
+const execa = require('execa');
+
+
+
+
+function writeJson(name, data){
+	return new Promise((resolve, reject)=>{
+		jsonfile.writeFile(name, data, {spaces: 2}, function (err) {
+			if (err) {
+				reject(err);
+			}
+			resolve();
+		});
+	});
+}
+
+function execArray(commands, dir){
+	commands.forEach((command)=>{
+		execa.shellSync(command, {
+			cwd: dir,
+			env: process.env,
+			stdio: 'inherit'
+		});
+	});
+}
+
 
 program
   .version(package.version);
@@ -21,10 +46,12 @@ program
 	.command('init <dir>')
 	.description('Initialises the Emily Component Manager')
 	.action((dir)=>{
+
 		if (dir.indexOf(path.sep) === 0) {
 			console.log(colors.red('Only relative paths allowed.'));
-			return
+			return;
 		}
+
 		let target = dir.replace(/(\\|\/)/g, path.sep);
 		if (!fs.existsSync(cwd + path.sep + target)) {
 			makeDir.sync(cwd + path.sep + target);
@@ -38,17 +65,19 @@ program
 			console.log(colors.green('Direcoty validated.'));
 		}
 
-		prompt.message = "config";
-		prompt.get([{
-			name: 'command',
-			description: 'Command to run on component creation',
-			default: ''
-		},
-		{
-			name: 'files',
-			description: 'Default filenames in a new component',
-			default: ''
-		}], (err, result)=>{
+		prompt.message = colors.blue('Setup');
+		prompt.get([
+			{
+				name: 'command',
+				description: colors.yellow('Command to run on component creation:'),
+				default: ''
+			},
+			{
+				name: 'files',
+				description: colors.yellow('Default filenames in a new component:'),
+				default: ''
+			}
+		], (err, result)=>{
 			if (err) {
 				throw err;
 			}
@@ -62,6 +91,7 @@ program
 					});
 				});
 			}
+
 			let commands = [];
 			if (result.command.trim() !== '') {
 				commands.push(result.command.trim());
@@ -75,10 +105,7 @@ program
 					files: files
 				}
 			};
-			jsonfile.writeFile('emily.json', json, {spaces: 2}, function (err) {
-				if (err) {
-					throw err;
-				}
+			writeJson('emily.json', json).then(()=>{
 				console.log(colors.green('Emily initialized successfully.'));
 			});
 		});
@@ -110,12 +137,8 @@ program
 			active: true,
 			repository: ''
 		};
+		writeJson('emily.json', config);
 
-		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
-			if (err) {
-				throw err;
-			}
-		});
 
 		let moduleDir = cwd + path.sep + config.path + path.sep + module;
 		makeDir.sync(moduleDir);
@@ -134,9 +157,11 @@ program
 	});
 
 program
-	.command('activate <module>')
+	.command('toggle <module>')
 	.option('-e, --expression', '<module> will be handled as a regular expression')
-	.description('Activates the module with the given name')
+	.option('-a, --activate', '<module> will be activated no matter the current status')
+	.option('-d, --deactivate', '<module> will be deactivated no matter the current status')
+	.description('Activates or deactivates the given module')
 	.action(async(module, options)=>{
 		try{
 			config = emily.config();	
@@ -145,64 +170,36 @@ program
 			console.log(colors.red('emily.json not found!'));
 			return;
 		}
-		if (options.expression) {
-			let exp = new RegExp(module, 'g');
-			for(let item in config.modules){
-				if (item.match(exp)) {
-					config.modules[item].active = true;
-					console.log( item + colors.green(' activated'));
-				}
-			}
-		}
-		else{
-			if (config.modules[module]) {
-				config.modules[module].active = true;
-			}
-			else{
-				console.log(colors.red('Module could not be found'));
-			}		
-		}
-		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
-			if (err) {
-				throw err;
-			}
-		});
-	});
 
-program
-	.command('deactivate <module>')
-	.option('-e, --expression', '<module> will be handled as a regular expression')
-	.description('Deactivates the module with the given name')
-	.action(async(module, options)=>{
-		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
-			return;
-		}
+		let toggleModule = (module)=>{
+			if (options.activate)
+				module.active = true;
+			else if(options.deactivate)
+				module.active = false;
+			else
+				module.active = !module.active;
+			console.log( colors.blue(module.name) + ' has been ' + ((module.active)?colors.green('activated'):colors.red('deactivated')));
+		};
+
 		if (options.expression) {
-			let exp = new RegExp(module, 'g');
+			let exp = new RegExp(module, 'g'),
+				value;
 			for(let item in config.modules){
 				if (item.match(exp)) {
-					config.modules[item].active = false;
-					console.log( item + colors.red(' activated'));
+					toggleModule(config.modules[item]);
 				}
 			}
 		}
 		else{
-			if (config.modules[module]) {
-				config.modules[module].active = false;
+			if (config.modules[module]){
+				toggleModule(config.modules[module]);
 			}
 			else{
 				console.log(colors.red('Module could not be found'));
-			}		
-		}
-		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
-			if (err) {
-				throw err;
+				return;	
 			}
-		});
+		}
+		writeJson('emily.json', config);
 	});
 
 program
@@ -226,8 +223,8 @@ program
 		if (!options.up && !options.down) list = list.concat(emily.all());
 
 		list.forEach((module)=>{
-			moduleString = ((module.active)?colors.green('on'):colors.red('off')) + "\t";
-			moduleString += module.name;
+			moduleString = ((module.active)?colors.green('activated'):colors.red('deactivated')) + "\t";
+			moduleString += colors.blue(module.name);
 			console.log(moduleString);
 		});
 	});
@@ -237,7 +234,7 @@ program
 	.description('Creates a new module from its remote repository')
 	.action(async(git, name)=>{
 		try{
-			config = emily.config();
+			config = emily.config();	
 		}
 		catch(e){
 			console.log(colors.red('emily.json not found!'));
@@ -254,15 +251,10 @@ program
 			active: true,
 			repository: git
 		};
-
-		jsonfile.writeFile('emily.json', config, {spaces: 2}, function (err) {
-			if (err) {
-				throw err;
-			}
-		});
+		writeJson('emily.json', config);
 
 		let moduleDir = cwd + path.sep + config.path + path.sep + name;
-		await execArray(['git clone ' + git + ' ' + moduleDir], cwd);
+		execArray(['git clone ' + git + ' ' + moduleDir], cwd);
 	});
 
 program
@@ -270,10 +262,9 @@ program
 	.description('Pulls the given Module from its repository.')
 	.action(async(module)=>{
 		try{
-			config = emily.config();
+			config = emily.config();	
 		}
 		catch(e){
-			console.log(e);
 			console.log(colors.red('emily.json not found!'));
 			return;
 		}
@@ -290,6 +281,12 @@ program
 		await execArray(['git clone ' + config.modules[module].repository + ' ' + moduleDir], cwd);
 	});
 
+program
+	.command('*')
+	.action(async(module)=>{
+		console.log(colors.red('Unknown command'));
+		program.help();
+	});
 
 program.parse(process.argv);
 

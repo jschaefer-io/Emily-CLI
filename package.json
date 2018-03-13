@@ -17,12 +17,13 @@
   "dependencies": {
     "colors": "^1.1.2",
     "commander": "^2.14.1",
-    "prompt": "^1.0.0",
+    "execa": "^0.9.0",
     "jsonfile": "^4.0.0",
-    "make-dir": "^1.2.0"
+    "make-dir": "^1.2.0",
+    "prompt": "^1.0.0"
   },
   "bin": {
-    "emily": "bin/emily-cli.js"
+    "emily": "bin/emily.js"
   },
   "devDependencies": {}
 }
