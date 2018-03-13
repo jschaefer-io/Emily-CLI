@@ -21,11 +21,11 @@ module.exports = {
 	inactive: function(){
 		return this.all().filter((el)=>!el.active);
 	},
-	toFilename: function(modules){
+	toPaths: function(modules = new Object()){
 		let config = this.config(),
 			list = new Array();
-		for(let module in config.modules){
-			list.push(config.path + '/' + config.modules[module].name + '/');
+		for(let module in modules){
+			list.push(config.path + '/' + modules[module].name + '/');
 		}
 		return list;
 	}
