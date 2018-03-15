@@ -259,8 +259,9 @@ program
 
 program
 	.command('gitcheckout <module>')
+	.option('-e, --expression', '<module> will be handled as a regular expression')
 	.description('Pulls the given Module from its repository.')
-	.action(async(module)=>{
+	.action(async(module, options)=>{
 		try{
 			config = emily.config();	
 		}
@@ -269,16 +270,31 @@ program
 			return;
 		}
 
-		if (!config.modules[module]) {
-			console.log(colors.red('Module ') + module + colors.red(' could not be found.'));
-			return;
+		let checkoutModule = async function(modules, module){
+			if (!modules[module]) {
+				console.log(colors.red('Module ') + module + colors.red(' could not be found.'));
+				return;
+			}
+			if (modules[module].repository.length === 0) {
+				console.log(colors.red('Module ') + module + colors.red(' has no defined repository.'));
+				return;
+			}
+			let moduleDir = cwd + path.sep + config.path + path.sep + module;
+			await execArray(['git clone ' + modules[module].repository + ' ' + moduleDir], cwd);
+		};
+
+		if (options.expression) {
+			let exp = new RegExp(module, 'g');
+			for(let item in config.modules){
+				if (item.match(exp)) {
+					checkoutModule(config.modules, item);
+				}
+			}
 		}
-		if (config.modules[module].repository.length === 0) {
-			console.log(colors.red('Module ') + module + colors.red(' has no defined repository.'));
-			return;
+		else{
+			checkoutModule(config.modules, module);
 		}
-		let moduleDir = cwd + path.sep + config.path + path.sep + module;
-		await execArray(['git clone ' + config.modules[module].repository + ' ' + moduleDir], cwd);
+		
 	});
 
 program
