@@ -8,8 +8,6 @@ Install using: `npm install emily-cm -g`
 - `emily activate <module>` Activates the given module
 - `emily deactivate <module>` Dectivates the given module
 - `emily list` Lists all modules
-- `emily gitinit <git> <name>` Add a repository as a new modules
-- `emily gitcheckout <module>` Clones an existing module by its repository url
 
 ## emily.json
 After the basic installation via `emily init <dir>`. You can further customize the emily.json to fit your needs.

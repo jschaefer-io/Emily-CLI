@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 
 const program = require('commander');
-const prompt = require('prompt');
 const colors = require('colors');
 
 const emily = require('..');
@@ -12,31 +11,8 @@ const cwd = process.cwd();
 const makeDir = require('make-dir');
 const package = require('../' + 'package.json');
 const jsonfile = require('jsonfile');
-const execa = require('execa');
 
-const Remote = require('../connection/remote');
-
-
-function writeJson(name, data){
-	return new Promise((resolve, reject)=>{
-		jsonfile.writeFile(name, data, {spaces: 2}, function (err) {
-			if (err) {
-				reject(err);
-			}
-			resolve();
-		});
-	});
-}
-
-function execArray(commands, dir){
-	commands.forEach((command)=>{
-		execa.shellSync(command, {
-			cwd: dir,
-			env: process.env,
-			stdio: 'inherit'
-		});
-	});
-}
+const Cli = require('../app/cli');
 
 
 program
@@ -46,70 +22,56 @@ program
 	.command('init <dir>')
 	.description('Initialises the Emily Component Manager')
 	.action((dir)=>{
+		try{
 
-		if (dir.indexOf(path.sep) === 0) {
-			console.log(colors.red('Only relative paths allowed.'));
+			let target = dir.replace(/(\\|\/)/g, path.sep),
+				targetPath = cwd + path.sep + target;
+
+			Cli.error('Only relative paths allowed', target.indexOf(path.sep) === 0);
+			Cli.success('Directory created', !fs.existsSync(targetPath), ()=>{
+				makeDir.sync(targetPath);
+			});
+			Cli.error('Target directory is not empty.', fs.readdirSync(targetPath).length > 0);
+			Cli.success('Directory validated');
+
+			Cli.prompt(colors.blue('Setup'), [
+				{
+					name: 'command',
+					description: colors.yellow('Command to run on component creation:'),
+					default: ''
+				},
+				{
+					name: 'files',
+					description: colors.yellow('Default filenames in a new component:'),
+					default: ''
+				}
+			]).then((result)=>{
+
+				let json = Cli.getEmptySettings();
+
+				if (result.files.trim() !== '') {
+					result.files = result.files.replace(/\s+/g,' ').split(' ').forEach((file)=>{
+						json.defaults.files.push({
+							name: file,
+							content: ''
+						});
+					});
+				}
+
+				if (result.command.trim() !== '') {
+					json.defaults.commands.push(result.command.trim());
+				}
+
+				json.path = target.replace(path.sep, '/');
+
+				jsonfile.writeFileSync('emily.json', json, {spaces: 2});
+				Cli.success('Emily initialized successfully');
+			});
+
+		} catch(e){
+			Cli.warning(e.message);
 			return;
 		}
-
-		let target = dir.replace(/(\\|\/)/g, path.sep);
-		if (!fs.existsSync(cwd + path.sep + target)) {
-			makeDir.sync(cwd + path.sep + target);
-			console.log(colors.green('Directory created.'));
-		}
-		else if (fs.readdirSync(cwd + path.sep + target).length !== 0) {
-			console.log(colors.red('Target directory is not empty.'))
-			return;	
-		}
-		else{
-			console.log(colors.green('Directory validated.'));
-		}
-
-		prompt.message = colors.blue('Setup');
-		prompt.get([
-			{
-				name: 'command',
-				description: colors.yellow('Command to run on component creation:'),
-				default: ''
-			},
-			{
-				name: 'files',
-				description: colors.yellow('Default filenames in a new component:'),
-				default: ''
-			}
-		], (err, result)=>{
-			if (err) {
-				throw err;
-			}
-
-			let files = [];
-			if (result.files.trim() !== '') {
-				result.files = result.files.replace(/\s+/g,' ').split(' ').forEach((file)=>{
-					files.push({
-						name: file,
-						content: ''
-					});
-				});
-			}
-
-			let commands = [];
-			if (result.command.trim() !== '') {
-				commands.push(result.command.trim());
-			}
-
-			let json = {
-				path: target.replace(path.sep, '/'),
-				modules: {},
-				defaults: {
-					commands: commands,
-					files: files
-				}
-			};
-			writeJson('emily.json', json).then(()=>{
-				console.log(colors.green('Emily initialized successfully.'));
-			});
-		});
-
 	});
 
 
@@ -119,87 +81,41 @@ program
 	.option('-c, --nocommands', 'The default commands will not be executed in this module.')
 	.description('Creates a module with the given name')
 	.action(async(module, options)=>{
-		let config;
 		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
+
+			let Settings = Cli.getSettings();
+			let Module = Cli.getModules();
+			Cli.error('Module ' + module + ' already exists.', Module.exists(module));
+
+			let newModule = Module.create(module);
+			newModule.install(options);
+			newModule.save();
+
+		} catch(e){
+			Cli.warning(e.message);
 			return;
-		}
-		if (config.modules[module]) {
-			console.log(colors.red('Module ') + module + colors.red(' already exists.'));
-			return;
-		}
-
-		config.modules[module] = {
-			name: module,
-			active: true,
-			repository: ''
-		};
-		writeJson('emily.json', config);
-
-
-		let moduleDir = cwd + path.sep + config.path + path.sep + module;
-		makeDir.sync(moduleDir);
-
-		if (!options.nofiles) {
-			config.defaults.files.forEach((file)=>{
-				fs.writeFile(moduleDir + path.sep + file.name, file.content.replace(new RegExp('\\$\\{module\\}', 'g'), module), (e)=>{if (e) throw e;});
-			});
-		}
-
-		if (!options.nocommands) {
-			if (config.defaults.commands.length > 0) {
-				await execArray(config.defaults.commands, moduleDir)
-			}
 		}
 	});
 
 program
 	.command('toggle <module>')
-	.option('-e, --expression', '<module> will be handled as a regular expression')
-	.option('-a, --activate', '<module> will be activated no matter the current status')
-	.option('-d, --deactivate', '<module> will be deactivated no matter the current status')
-	.description('Activates or deactivates the given module')
+	.description('Toggles the given module')
 	.action(async(module, options)=>{
 		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
+
+			let Settings = Cli.getSettings();
+			let Module = Cli.getModules();
+			
+			moduleObj = Module.find(module);
+			moduleObj.toggle();
+			moduleObj.save();
+
+			Cli.success(moduleObj.name + ' has been ' + ((moduleObj.active)?'activated':'deactivated'));
+
+		} catch(e){
+			Cli.warning(e.message);
 			return;
 		}
-
-		let toggleModule = (module)=>{
-			if (options.activate)
-				module.active = true;
-			else if(options.deactivate)
-				module.active = false;
-			else
-				module.active = !module.active;
-			console.log( colors.blue(module.name) + ' has been ' + ((module.active)?colors.green('activated'):colors.red('deactivated')));
-		};
-
-		if (options.expression) {
-			let exp = new RegExp(module, 'g'),
-				value;
-			for(let item in config.modules){
-				if (item.match(exp)) {
-					toggleModule(config.modules[item]);
-				}
-			}
-		}
-		else{
-			if (config.modules[module]){
-				toggleModule(config.modules[module]);
-			}
-			else{
-				console.log(colors.red('Module could not be found'));
-				return;	
-			}
-		}
-		writeJson('emily.json', config);
 	});
 
 program
@@ -209,128 +125,95 @@ program
 	.option('-d, --down', 'list only deactivated modules')
 	.action(async(options)=>{
 		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
+			let Settings = Cli.getSettings();
+			let list = [];
+
+			if (options.up) list = list.concat(emily.active())
+			if (options.down) list = list.concat(emily.inactive())
+			if (!options.up && !options.down) list = list.concat(emily.all());
+
+				list.forEach((module)=>{
+					moduleString = ((module.active)?colors.green('activated'):colors.red('deactivated')) + "\t";
+					moduleString += colors.blue(module.name);
+					console.log(moduleString);
+				});
+
+		} catch(e){
+			Cli.warning(e.message);
 			return;
 		}
-		let moduleString,
-			list = new Array();
-
-		if (options.up) list = list.concat(emily.active())
-		if (options.down) list = list.concat(emily.inactive())
-		if (!options.up && !options.down) list = list.concat(emily.all());
-
-		list.forEach((module)=>{
-			moduleString = ((module.active)?colors.green('activated'):colors.red('deactivated')) + "\t";
-			moduleString += colors.blue(module.name);
-			console.log(moduleString);
-		});
 	});
 
 program
-	.command('gitinit <git> <name>')
-	.description('Creates a new module from its remote repository')
-	.action(async(git, name)=>{
+	.command('remote <remote> <url>')
+	.description('Adds a remote to the Component Manager')
+	.action(async(remote, url)=>{
 		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
+
+			let Settings = Cli.getSettings();
+			let Remote = Cli.getRemotes();
+
+			Cli.error('Remote with the name ' + remote + ' does already exist.', Remote.exists(remote));
+			Cli.prompt('config', [{name: 'apikey', description: colors.yellow('Remote API-Key')}]).then((results)=>{
+				let remotes = Settings.getRemotes();
+				remotes.push(new Remote(remote, results.apikey, url));
+				Settings.updateRemotes(remotes);
+				Cli.success('Remote ' + remote + ' added successfully.');
+			});
+
+		} catch(e){
+			Cli.warning(e.message);
 			return;
 		}
-
-		if (config.modules[name]) {
-			console.log(colors.red('Module ') + name + colors.red(' already exists.'));
-			return;
-		}
-
-		config.modules[name] = {
-			name: name,
-			active: true,
-			repository: git
-		};
-		writeJson('emily.json', config);
-
-		let moduleDir = cwd + path.sep + config.path + path.sep + name;
-		execArray(['git clone ' + git + ' ' + moduleDir], cwd);
 	});
 
-program
-	.command('gitcheckout <module>')
-	.option('-e, --expression', '<module> will be handled as a regular expression')
-	.description('Pulls the given Module from its repository.')
-	.action(async(module, options)=>{
-		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
-			return;
-		}
-
-		let checkoutModule = async function(modules, module){
-			if (!modules[module]) {
-				console.log(colors.red('Module ') + module + colors.red(' could not be found.'));
-				return;
-			}
-			if (modules[module].repository.length === 0) {
-				console.log(colors.red('Module ') + module + colors.red(' has no defined repository.'));
-				return;
-			}
-			let moduleDir = cwd + path.sep + config.path + path.sep + module;
-			await execArray(['git clone ' + modules[module].repository + ' ' + moduleDir], cwd);
-		};
-
-		if (options.expression) {
-			let exp = new RegExp(module, 'g');
-			for(let item in config.modules){
-				if (item.match(exp)) {
-					checkoutModule(config.modules, item);
-				}
-			}
-		}
-		else{
-			checkoutModule(config.modules, module);
-		}
-		
-	});
 
 program
 	.command('pull <remote> <module> [version]')
-	.description('Pulls the given Module from the given Module.')
+	.description('Pulls the given Module from the given remote.')
 	.action(async(remote, module, version = 'newest')=>{
 		try{
-			config = emily.config();	
-		}
-		catch(e){
-			console.log(colors.red('emily.json not found!'));
+			let Settings = Cli.getSettings();
+			let Remote = Cli.getRemotes();
+			let Module = Cli.getModules();
+
+			Cli.error('Remote with the name ' + remote + ' does not exist.', !Remote.exists(remote));
+
+			let remoteObj = Remote.get(remote);
+			await remoteObj.pullModule(module, version).then((res)=>{
+				new Module(module, true, res.body.version).save();
+				Cli.success('Module ' + module + ' pulled successfully from ' + remote);
+			}).catch((e)=>{
+				Cli.error(e, true);
+			});
+		} catch(e){
+			Cli.warning(e.message);
 			return;
 		}
+	});
 
-		if (config.modules[module]) {
-			console.log(colors.red('Module ') + module + colors.red(' already exists.'));
+program
+	.command('push <remote> <module>')
+	.description('Pushes the given Module to the given remote.')
+	.action(async(remote, module)=>{
+		try{
+			let Settings = Cli.getSettings();
+			let Remote = Cli.getRemotes();
+			let Module = Cli.getModules();
+
+			Cli.error('Remote with the name ' + remote + ' does not exist.', !Remote.exists(remote));
+			let version = Module.find(module).version,
+				remoteObj = Remote.get(remote);
+			await remoteObj.pushModule(module, version).catch((e)=>{
+				Cli.error(e, true);
+			});
+
+			Cli.success('Module ' + module + ' pushed successfully to ' + remote);
+
+		} catch(e){
+			Cli.warning(e.message);
 			return;
 		}
-
-
-		if (!Remote.exists(remote)) {
-			console.log(colors.red('Remote with the name ' + remote + ' does not exist.') + ' Use emily add-remote to add it to this project.');
-			return;
-		}
-
-		let remoteObj = Remote.get(remote);
-		remoteObj.pullModule(module, version);
-
-		config.modules[module] = {
-			name: module,
-			active: true,
-			repository: ''
-		};
-		writeJson('emily.json', config);
-
-		console.log(colors.green('Module ') + module + colors.green(' pulled successfully from ') + remote);
 	});
 
 program

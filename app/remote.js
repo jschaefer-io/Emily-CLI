@@ -16,15 +16,28 @@ class Remote{
 	}
 
 	pullModule(module, version){
-		new Request(this.url, this.token, 'GET', module, version).exec().then((res)=>{
-			Tree.emergeTree(process.cwd() + path.sep + config.path + path.sep, [res.body]);
+		return new Promise((resolve, reject)=>{
+			new Request(this.url, this.token, 'GET', module, version).exec().then((res)=>{
+				if (res.body.error) {
+					reject(res.body.message);
+					return;
+				}
+				Tree.emergeTree(process.cwd() + path.sep + config.path + path.sep, [res.body.tree]);
+				resolve(res);
+			});
 		});
 	}
 
 	pushModule(module, version){
-		new Request(this.url, this.token, 'POST', module, version, this.getTree()).exec().then((res)=>{
-			console.log(res.body);
-		});
+		return new Promise((resolve, reject)=>{
+			new Request(this.url, this.token, 'POST', module, version, this.getTree(module)).exec().then((res)=>{
+				if (res.body.error) {
+					reject(res.body.message);
+					return;
+				}
+				resolve(res);
+			});
+		})
 	}
 
 	static getList(){
