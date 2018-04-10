@@ -7,7 +7,6 @@ class Tree{
 		this.stat = fs.statSync(this.path);
 		this.type = this.setType();
 		this.fill();
-		
 	}
 
 	fill(){
@@ -53,7 +52,4 @@ class Tree{
 	}
 }
 
-// let path = process.cwd() + '/modules/';
-// let tree = new Tree('test', path + 'test');
-
-// Tree.emergeTree(path + 'lorem', [tree]);
+module.exports = Tree;
