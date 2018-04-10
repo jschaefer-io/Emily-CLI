@@ -14,7 +14,7 @@ const package = require('../' + 'package.json');
 const jsonfile = require('jsonfile');
 const execa = require('execa');
 
-
+const Remote = require('../connection/remote');
 
 
 function writeJson(name, data){
@@ -295,6 +295,42 @@ program
 			checkoutModule(config.modules, module);
 		}
 		
+	});
+
+program
+	.command('pull <remote> <module> [version]')
+	.description('Pulls the given Module from the given Module.')
+	.action(async(remote, module, version = 'newest')=>{
+		try{
+			config = emily.config();	
+		}
+		catch(e){
+			console.log(colors.red('emily.json not found!'));
+			return;
+		}
+
+		if (config.modules[module]) {
+			console.log(colors.red('Module ') + module + colors.red(' already exists.'));
+			return;
+		}
+
+
+		if (!Remote.exists(remote)) {
+			console.log(colors.red('Remote with the name ' + remote + ' does not exist.') + ' Use emily add-remote to add it to this project.');
+			return;
+		}
+
+		let remoteObj = Remote.get(remote);
+		remoteObj.pullModule(module, version);
+
+		config.modules[module] = {
+			name: module,
+			active: true,
+			repository: ''
+		};
+		writeJson('emily.json', config);
+
+		console.log(colors.green('Module ') + module + colors.green(' pulled successfully from ') + remote);
 	});
 
 program
