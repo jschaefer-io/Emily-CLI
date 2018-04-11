@@ -252,6 +252,8 @@ program
 			moduleObj.version = version.join('.');
 			moduleObj.save();
 
+			Cli.success('Version of '+ module + ' updated to ' + moduleObj.version);
+
 		} catch(e){
 			Cli.warning(e.message);
 			return;
