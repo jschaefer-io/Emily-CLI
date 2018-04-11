@@ -103,8 +103,9 @@ program
 	.action(async(module, options)=>{
 		try{
 
-			let Settings = Cli.getSettings();
 			let Module = Cli.getModules();
+
+			Cli.error('Module ' + module + ' does not exist.', !Module.exists(module));
 			
 			moduleObj = Module.find(module);
 			moduleObj.toggle();
@@ -180,7 +181,7 @@ program
 			Cli.error('Remote with the name ' + remote + ' does not exist.', !Remote.exists(remote));
 
 			let remoteObj = Remote.get(remote);
-			await remoteObj.pullModule(module, version).then((res)=>{
+			await remoteObj.pullModule(module, Remote.encodeVersion(version)).then((res)=>{
 				new Module(module, true, res.body.version).save();
 				Cli.success('Module ' + module + ' pulled successfully from ' + remote);
 			}).catch((e)=>{
@@ -204,11 +205,52 @@ program
 			Cli.error('Remote with the name ' + remote + ' does not exist.', !Remote.exists(remote));
 			let version = Module.find(module).version,
 				remoteObj = Remote.get(remote);
-			await remoteObj.pushModule(module, version).catch((e)=>{
+			await remoteObj.pushModule(module, Remote.encodeVersion(version)).catch((e)=>{
 				Cli.error(e, true);
 			});
 
 			Cli.success('Module ' + module + ' pushed successfully to ' + remote);
+
+		} catch(e){
+			Cli.warning(e.message);
+			return;
+		}
+	});
+
+program
+	.command('version <module> <increment>')
+	.description('Updates the given modules version number.')
+	.action(async(module, increment)=>{
+		try{
+			let Module = Cli.getModules();
+
+			let increments = ['major','minor','patch'];
+			Cli.error('Increment must be one of: ' + increments, increments.indexOf(increment) === -1);
+			Cli.error('Module ' + module + ' does not exist.', !Module.exists(module));
+
+			let moduleObj = Module.find(module),
+				version = moduleObj.version.split('.');
+
+			switch(increment){
+				case 'major':
+					if (version[1]) {
+						version.splice(1,2);
+						version[1] = 0;
+					}
+					version[0]++;
+					break;
+				case 'minor':
+					if (!version[1]) {version[1] = 0;}
+					if (version[2]) {version.splice(2,1);}
+					version[1]++;
+					break;
+				case 'patch':
+					if (!version[2]) {version[2] = 0;}
+					version[2]++;
+					break;
+			}
+			moduleObj.version = version.join('.');
+			moduleObj.save();
 
 		} catch(e){
 			Cli.warning(e.message);

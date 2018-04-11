@@ -1,7 +1,7 @@
 const path = require('path');
 const execa = require('execa');
 
-const Settings = require('./settings.js');
+const Settings = require('./settings');
 const makeDir = require('make-dir');
 
 class Module{

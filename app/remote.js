@@ -23,6 +23,7 @@ class Remote{
 					return;
 				}
 				Tree.emergeTree(process.cwd() + path.sep + config.path + path.sep, [res.body.tree]);
+				res.body.version = this.constructor.decodeVersion(res.body.version);
 				resolve(res);
 			});
 		});
@@ -31,13 +32,21 @@ class Remote{
 	pushModule(module, version){
 		return new Promise((resolve, reject)=>{
 			new Request(this.url, this.token, 'POST', module, version, this.getTree(module)).exec().then((res)=>{
-				if (res.body.error) {
+				if (res.body.error || !res.body.success) {
 					reject(res.body.message);
 					return;
 				}
 				resolve(res);
 			});
 		})
+	}
+
+	static encodeVersion(version){
+		return version.replace(/\./g,'__');
+	}
+
+	static decodeVersion(version){
+		return version.replace(/\_\_/g,'.');
 	}
 
 	static getList(){
