@@ -1,6 +1,13 @@
 const fs = require('fs');
 
 class Tree{
+
+	/**
+	 * Constructor
+	 * @param  {String} name - file-/dirname
+	 * @param  {String} path - path to the file/directory
+	 * @return {String}      file or dir , determines the type of element
+	 */
 	constructor(name, path){
 		this.name = name;
 		this.path = path;
@@ -9,6 +16,11 @@ class Tree{
 		this.fill();
 	}
 
+	/**
+	 * Fills the Tree Data with the fitting content depending on its type
+	 * dir-types will get its children filled
+	 * file-types will get its content filled
+	 */
 	fill(){
 		if (this.type === 'dir') {
 			this.children = this.constructor.getTree(this.path);
@@ -18,17 +30,29 @@ class Tree{
 		}
 	}
 
-	isDir(path){
+	/**
+	 * Checks if the current Tree Object is a directory
+	 * @return {Boolean} returns true if the Object is a directory
+	 */
+	isDir(){
 		return this.stat.isDirectory();
 	}
 
+	/**
+	 * Sets the Item type: dir or file
+	 */
 	setType(){
-		if (this.isDir(this.path)) {
+		if (this.isDir()) {
 			return 'dir';
 		}
 		return 'file';
 	}
 
+	/**
+	 * Returns the full fs-tree of the given directory
+	 * @param  {String} path - directory path
+	 * @return {Tree}      - Tree Object containing the full fs-tree
+	 */
 	static getTree(path){
 		let tree = fs.readdirSync(path);
 		return tree.map((item)=>{
@@ -37,6 +61,11 @@ class Tree{
 		});
 	}
 
+	/**
+	 * Copys the full fs-tree to the given directory
+	 * @param  {String} path  - directory path
+	 * @param  {Array} trees - array of trees to be copied to the target path
+	 */
 	static emergeTree(path, trees){
 		if (!fs.existsSync(path)) {
 			fs.mkdirSync(path);
