@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const execa = require('execa');
 
 const Settings = require('./settings');
