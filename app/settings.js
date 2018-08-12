@@ -1,4 +1,4 @@
-const config =  require('..').config();
+let config =  require('..').config();
 const jsonfile = require('jsonfile');
 
 
@@ -35,23 +35,6 @@ class Settings{
 	 */
 	static updateModules(obj){
 		config.modules = obj;
-		Settings.save();
-	}
-
-	/**
-	 * Gets the remote-section from the emily.json
-	 * @return {Array} list of all remotes
-	 */
-	static getRemotes(){
-		return config.remotes;
-	}
-
-	/**
-	 * Updates the remote-section of the emily.json with the given remote array
-	 * @param  {Array} arr - new remote-array
-	 */
-	static updateRemotes(arr){
-		config.remotes = arr;
 		Settings.save();
 	}
 

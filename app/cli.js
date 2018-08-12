@@ -20,15 +20,6 @@ class Cli{
 	}
 
 	/**
-	 * Provides the Remotes Api
-	 * @return {Remote.class}
-	 */
-	static getRemotes(){
-		return require('./remote');
-	}
-
-	
-	/**
 	 * Gets a template for the emily-cm settings object
 	 * @return {Object}
 	 */
@@ -36,7 +27,6 @@ class Cli{
 		return {
 			path: null,
 			modules: {},
-			remotes: [],
 			defaults: {
 				commands: [],
 				files: []
@@ -100,7 +90,7 @@ class Cli{
 	 * @param  {Array} fields  - Array of objects containing the prompt fields
 	 * @return {Promise} Promise with the prompt data
 	 */
-	static prompt(message, fields){
+	static async prompt(message, fields){
 		return new Promise((resolve, reject)=>{
 			prompt.message = message;
 			prompt.get(fields, (err, result)=>{

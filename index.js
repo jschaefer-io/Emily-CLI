@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const jsonfile = require('jsonfile');
 const cwd = process.cwd();
@@ -29,4 +28,4 @@ module.exports = {
 		}
 		return list;
 	}
-}
+};

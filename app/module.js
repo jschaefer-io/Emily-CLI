@@ -1,5 +1,6 @@
 const path = require('path');
 const execa = require('execa');
+const fs = require('fs');
 
 const Settings = require('./settings');
 const makeDir = require('make-dir');
@@ -10,12 +11,10 @@ class Module{
 	 * Constructor
 	 * @param  {String} name    - Module Name
 	 * @param  {Boolean} active  - true if the module is active
-	 * @param  {String} version - Module version string
 	 */
-	constructor(name, active, version){
+	constructor(name, active){
 		this.name = name;
 		this.active = active;
-		this.version = version;
 	}
 
 	/**
@@ -104,7 +103,7 @@ class Module{
 	 * @return {Module}      new Module Object
 	 */
 	static create(name){
-		return new Module(name, true, '1.0');
+		return new Module(name, true);
 	}
 
 	/**
@@ -122,31 +121,11 @@ class Module{
 	/**
 	 * Returns the Module-Object, saved in theModule-Directory by name
 	 * @param  {String} name - Module name to search
-	 * @return {Boolean}      Module Object of the installed Module
+	 * @return {Module}      Module Object of the installed Module
 	 */
 	static find(name){
 		let base = Settings.getModules()[name];
-		return new Module(base.name, base.active, base.version);
-	}
-
-	/**
-	 * Adds a new Module to the emily.json
-	 * @param {Module} module - Module Object to insert into emily.json
-	 */
-	static add(module){
-		let modules = Settings.getModules();
-		modules[module.name] = module;
-		Settings.updateModules(modules);
-	}
-
-	/**
-	 * Removes a module by name from the emily.json
-	 * @param  {String} name - Module name
-	 */
-	static remove(name){
-		let modules = Settings.getModules();
-		delete modules[name];
-		Settings.updateModules(modules);	
+		return new Module(base.name, base.active);
 	}
 }
 
