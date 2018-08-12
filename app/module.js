@@ -45,7 +45,7 @@ class Module{
 
 		if (!options.nofiles) {
 			config.defaults.files.forEach((file)=>{
-				fs.writeFileSync(moduleDir + path.sep + file.name, file.content.replace(new RegExp('\\$\\{module\\}', 'g'), module));
+				fs.writeFileSync(moduleDir + path.sep + file.name, file.content.replace(new RegExp('\\$\\{module\\}', 'g'), this.name));
 			});
 		}
 
