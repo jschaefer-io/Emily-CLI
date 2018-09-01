@@ -9,7 +9,7 @@
     "url": "git+https://github.com/jschaefer-io/emily-cm.git"
   },
   "author": "Jannik Schäfer <me@jschaefer.io>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jschaefer-io/emily-cm/issues"
   },
